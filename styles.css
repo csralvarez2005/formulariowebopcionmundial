@@ -1,0 +1,85 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    max-width: 600px;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-top: 50px; /* Baja el formulario */
+}
+
+.logo {
+    max-width: 100%; /* Ajusta el tamaño de la imagen */
+    height: auto;
+    display: block;
+    margin: 0 auto 20px;
+}
+
+/* Responsividad para pantallas pequeñas */
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        margin-top: 20px;
+    }
+
+    .logo {
+        max-width: 100%;
+    }
+}
+
+.card {
+    padding: 20px;
+    background: #eef7e8;
+    border-radius: 8px;
+    text-align: center;
+}
+
+h2 {
+    color: #217a21;
+    font-size: 24px;
+}
+
+.note {
+    font-style: italic;
+    color: #555;
+}
+
+/* Ajustes para pantallas pequeñas */
+@media (max-width: 576px) {
+    h2 {
+        font-size: 20px;
+    }
+    
+    .note {
+        font-size: 14px;
+    }
+}
+
+/* Etiquetas en negrita y asterisco en rojo */
+label {
+    font-weight: bold; /* Negrita */
+    display: block;
+    margin-bottom: 5px;
+    text-align: left; /* Asegura que los labels estén alineados a la izquierda */
+}
+
+.required {
+    color: red; /* Asterisco en rojo */
+}
+
+input[type="email"], input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
