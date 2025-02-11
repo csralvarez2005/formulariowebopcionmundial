@@ -1,8 +1,11 @@
 <?php
 include 'db.php';
 
+$db = new Database();
+$conn = $db->conn;
+
 if (isset($_GET["id"]) && isset($_GET["tipo"])) {
-    $id = $_GET["id"];
+    $id = intval($_GET["id"]);
     $tipo = $_GET["tipo"];
 
     // Validar que el tipo de archivo existe en la base de datos
@@ -20,14 +23,36 @@ if (isset($_GET["id"]) && isset($_GET["tipo"])) {
     $stmt->fetch();
 
     if ($contenido) {
-        header("Content-Type: application/pdf");
-        header("Content-Disposition: attachment; filename={$tipo}_{$email}.pdf");
+        // Intentar determinar el tipo de archivo
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime_type = $finfo->buffer($contenido);
+
+        // Mapear MIME types a extensiones
+        $extensiones_permitidas = [
+            "application/pdf" => "pdf",
+            "image/png" => "png",
+            "image/jpeg" => "jpg",
+            "image/jpg" => "jpg"
+        ];
+
+        if (!array_key_exists($mime_type, $extensiones_permitidas)) {
+            die("Formato de archivo no soportado.");
+        }
+
+        $extension = $extensiones_permitidas[$mime_type];
+
+        // Configurar las cabeceras para la descarga
+        header("Content-Type: $mime_type");
+        header("Content-Disposition: attachment; filename={$tipo}_{$email}.$extension");
+        
+        // Enviar el contenido del archivo
         echo $contenido;
     } else {
         echo "Archivo no encontrado.";
     }
+    
+    $stmt->close();
 }
 
-$stmt->close();
 $conn->close();
 ?>
