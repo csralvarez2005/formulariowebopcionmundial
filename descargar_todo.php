@@ -1,13 +1,13 @@
 <?php
-include 'db.php';
-$db = new Database();
+include 'config.php';
+$config = new Database();
 
 if (!isset($_GET['email']) || empty($_GET['email'])) {
     die("Debe proporcionar un correo electrónico válido.");
 }
 
 $email = $_GET['email'];
-$result = $db->conn->query("SELECT identificacion, acta_bachiller, sisben, abono FROM archivos WHERE email = '$email'");
+$result = $config->conn->query("SELECT identificacion, acta_bachiller, sisben, abono FROM archivos WHERE email = '$email'");
 
 if ($row = $result->fetch_assoc()) {
     $zip = new ZipArchive();

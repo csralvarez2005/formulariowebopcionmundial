@@ -1,8 +1,8 @@
 <?php
-include 'db.php';
+include 'config.php';
 
-$db = new Database();
-$conn = $db->conn;
+$config = new Database();
+$conn = $config->conn;
 
 if (isset($_GET["id"]) && isset($_GET["tipo"])) {
     $id = intval($_GET["id"]);

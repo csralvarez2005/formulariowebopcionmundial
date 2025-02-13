@@ -1,7 +1,7 @@
 <?php
-include 'db.php';
+include 'config.php';
 
-$db = new Database();
+$config = new Database();
 
 if (isset($_GET['id']) && isset($_GET['tipo'])) {
     $id = intval($_GET['id']);
@@ -22,7 +22,7 @@ if (isset($_GET['id']) && isset($_GET['tipo'])) {
     $columna = $columnas_validas[$tipo];
 
     // Obtener el archivo
-    $query = $db->conn->prepare("SELECT $columna FROM archivos WHERE id = ?");
+    $query = $config->conn->prepare("SELECT $columna FROM archivos WHERE id = ?");
     $query->bind_param("i", $id);
     $query->execute();
     $query->bind_result($contenido);

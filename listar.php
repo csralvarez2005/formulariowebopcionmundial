@@ -1,11 +1,11 @@
 <?php
-include 'db.php';
+include 'config.php';
 
-$db = new Database();
+$config = new Database();
 
 // Obtener la cantidad total de registros
 $total_query = "SELECT COUNT(*) as total FROM archivos";
-$total_result = $db->conn->query($total_query);
+$total_result = $config->conn->query($total_query);
 $total_registros = $total_result->fetch_assoc()['total'];
 
 // Configuración de paginación
@@ -15,8 +15,9 @@ $pagina_actual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
 $inicio = ($pagina_actual - 1) * $registros_por_pagina;
 
 // Obtener registros con límite
-$query = "SELECT id, email, fecha_subida, identificacion, acta_bachiller, sisben, abono FROM archivos ORDER BY fecha_subida DESC LIMIT $inicio, $registros_por_pagina";
-$result = $db->conn->query($query);
+$query = "SELECT id, email, programa, fecha_subida, identificacion, acta_bachiller, sisben, abono 
+          FROM archivos ORDER BY fecha_subida DESC LIMIT $inicio, $registros_por_pagina";
+$result = $config->conn->query($query);
 ?>
 
 <!DOCTYPE html>
@@ -36,14 +37,15 @@ $result = $db->conn->query($query);
 
         <!-- Input de búsqueda -->
         <div class="mb-3">
-            <input type="text" id="buscarEmail" class="form-control" placeholder="Buscar por email..." onkeyup="buscarUsuario()">
+            <input type="text" id="buscarEmail" class="form-control" placeholder="Buscar por email o programa..." onkeyup="buscarUsuario()">
         </div>
 
         <table class="table table-bordered table-striped text-center">
             <thead class="table-dark">
                 <tr>
                     <th>Email</th>
-                    <th>Fecha de Subida</th>
+                    <th>Programa</th>
+                    <th>Fecha de Subida</th>                  
                     <th>Archivos Adjuntos</th>
                     <th>Acciones</th>
                 </tr>
@@ -52,6 +54,7 @@ $result = $db->conn->query($query);
                 <?php while ($row = $result->fetch_assoc()) : ?>
                     <tr>
                         <td><?php echo htmlspecialchars($row['email']); ?></td>
+                        <td><?php echo htmlspecialchars($row['programa']); ?></td>
                         <td><?php echo date("d/m/Y H:i", strtotime($row['fecha_subida'])); ?></td>
                         <td>
                             <div class="d-flex flex-column align-items-center">
@@ -160,7 +163,8 @@ $result = $db->conn->query($query);
 
             filas.forEach(fila => {
                 let email = fila.cells[0].textContent.toLowerCase();
-                fila.style.display = email.includes(input) ? "" : "none";
+                let programa = fila.cells[1].textContent.toLowerCase();
+                fila.style.display = (email.includes(input) || programa.includes(input)) ? "" : "none";
             });
         }
     </script>

@@ -1,7 +1,7 @@
 <?php
-include 'db.php';
+include 'config.php';
 
-$db = new Database();
+$config = new Database();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["id"]) && isset($_POST["archivoTipo"]) && isset($_FILES["nuevoArchivo"])) {
     $id = intval($_POST["id"]);
@@ -51,7 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["id"]) && isset($_POST[
     $nuevoArchivo = file_get_contents($archivoTmp);
 
     // Actualizar el archivo en la base de datos
-    $query = $db->conn->prepare("UPDATE archivos SET $archivoTipo = ? WHERE id = ?");
+    $query = $config->conn->prepare("UPDATE archivos SET $archivoTipo = ? WHERE id = ?");
     $query->bind_param("si", $nuevoArchivo, $id);
 
     if ($query->execute()) {
