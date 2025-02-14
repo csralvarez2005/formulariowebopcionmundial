@@ -3,69 +3,34 @@ include 'config.php';
 
 $config = new Database();
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["id"]) && isset($_POST["archivoTipo"]) && isset($_FILES["nuevoArchivo"])) {
-    $id = intval($_POST["id"]);
-    $archivoTipo = $_POST["archivoTipo"];
-    $archivoTmp = $_FILES["nuevoArchivo"]["tmp_name"];
-    $archivoNombre = $_FILES["nuevoArchivo"]["name"];
-    $archivoTamaño = $_FILES["nuevoArchivo"]["size"];
-    $archivoMime = mime_content_type($archivoTmp);
-    
-    // Extensiones y tipos MIME permitidos
-    $extensiones_permitidas = [
-        "application/pdf" => "pdf",
-        "image/png" => "png",
-        "image/jpeg" => "jpg",
-        "image/jpg" => "jpg"
-    ];
+if (isset($_GET["id"]) && isset($_GET["tipo"])) {
+    $id = intval($_GET["id"]);
+    $tipo = $_GET["tipo"];
 
-    // Validar tipo de archivo
-    if (!array_key_exists($archivoMime, $extensiones_permitidas)) {
-        echo "<script>
-            alert('Error: Tipo de archivo no permitido. Solo se permiten PDF, PNG, JPG y JPEG.');
-            window.location.href='listar.php';
-        </script>";
-        exit();
-    }
-
-    // Validar que el tipo de archivo pertenece a una columna válida
     $columnas_validas = ["identificacion", "acta_bachiller", "sisben", "abono"];
-    if (!in_array($archivoTipo, $columnas_validas)) {
-        echo "<script>
-            alert('Error: Tipo de documento no válido.');
-            window.location.href='listar.php';
-        </script>";
-        exit();
+    if (!in_array($tipo, $columnas_validas)) {
+        die("Tipo de archivo no válido.");
     }
 
-    // Limitar el tamaño del archivo (5MB)
-    if ($archivoTamaño > 5 * 1024 * 1024) { // 5MB
-        echo "<script>
-            alert('Error: El archivo es demasiado grande. Máximo permitido: 5MB.');
-            window.location.href='listar.php';
-        </script>";
-        exit();
-    }
+    $query = $config->conn->prepare("SELECT $tipo FROM archivos WHERE id = ?");
+    $query->bind_param("i", $id);
+    $query->execute();
+    $query->store_result();
 
-    // Convertir el archivo a binario para la base de datos
-    $nuevoArchivo = file_get_contents($archivoTmp);
+    if ($query->num_rows > 0) {
+        $query->bind_result($archivo);
+        $query->fetch();
+        
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $tipo_mime = $finfo->buffer($archivo);
 
-    // Actualizar el archivo en la base de datos
-    $query = $config->conn->prepare("UPDATE archivos SET $archivoTipo = ? WHERE id = ?");
-    $query->bind_param("si", $nuevoArchivo, $id);
-
-    if ($query->execute()) {
-        echo "<script>
-            alert('Archivo actualizado correctamente.');
-            window.location.href='listar.php';
-        </script>";
+        header("Content-Type: $tipo_mime");
+        echo $archivo;
     } else {
-        echo "<script>
-            alert('Error al actualizar el archivo.');
-            window.location.href='listar.php';
-        </script>";
+        echo "Archivo no encontrado.";
     }
 
     $query->close();
 }
 ?>
+

@@ -109,6 +109,20 @@
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         });
+        document.addEventListener("DOMContentLoaded", function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("updated") === "1") {
+            Swal.fire({
+                icon: "success",
+                title: "¡Actualización Exitosa!",
+                text: "Tu archivo ha sido actualizado correctamente.",
+                confirmButtonText: "Aceptar"
+            }).then(() => {
+                // Limpiar la URL para que el mensaje no se repita
+                window.history.replaceState({}, document.title, window.location.pathname);
+            });
+        }
+    });
     </script>
 
 </body>

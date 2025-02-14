@@ -3,37 +3,33 @@ include 'config.php';
 
 $config = new Database();
 
-if (isset($_GET['id']) && isset($_GET['tipo'])) {
-    $id = intval($_GET['id']);
-    $tipo = $_GET['tipo'];
+if (isset($_GET["id"]) && isset($_GET["tipo"])) {
+    $id = intval($_GET["id"]);
+    $tipo = $_GET["tipo"];
 
-    // Validar que el tipo de archivo existe en la base de datos
-    $columnas_validas = [
-        "Identificación" => "identificacion",
-        "Acta de Bachiller" => "acta_bachiller",
-        "Sisbén" => "sisben",
-        "Abono" => "abono"
-    ];
-
-    if (!isset($columnas_validas[$tipo])) {
+    $columnas_validas = ["identificacion", "acta_bachiller", "sisben", "abono"];
+    if (!in_array($tipo, $columnas_validas)) {
         die("Tipo de archivo no válido.");
     }
 
-    $columna = $columnas_validas[$tipo];
-
-    // Obtener el archivo
-    $query = $config->conn->prepare("SELECT $columna FROM archivos WHERE id = ?");
+    $query = $config->conn->prepare("SELECT $tipo FROM archivos WHERE id = ?");
     $query->bind_param("i", $id);
     $query->execute();
-    $query->bind_result($contenido);
-    $query->fetch();
-    $query->close();
+    $query->store_result();
 
-    if ($contenido) {
-        header("Content-Type: application/pdf");
-        echo $contenido;
+    if ($query->num_rows > 0) {
+        $query->bind_result($archivo);
+        $query->fetch();
+        
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $tipo_mime = $finfo->buffer($archivo);
+
+        header("Content-Type: $tipo_mime");
+        echo $archivo;
     } else {
         echo "Archivo no encontrado.";
     }
+
+    $query->close();
 }
 ?>

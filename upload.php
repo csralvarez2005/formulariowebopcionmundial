@@ -1,65 +1,67 @@
 <?php
 include 'config.php';
-include 'programas.php';
 
 $config = new Database();
-$conn = $config->conn;
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    if (!isset($_POST["email"]) || empty($_POST["email"])) {
-        header("Location: index.php?error=Debe ingresar un correo electrónico");
+    $email = $_POST["email"] ?? null;
+    $programa = $_POST["programa"] ?? null;
+    
+    // Verificar que el correo y el programa sean válidos
+    if (empty($email) || empty($programa)) {
+        header("Location: index.php?error=Faltan datos obligatorios.");
         exit();
     }
 
-    if (!isset($_POST["programa"]) || empty($_POST["programa"])) {
-        header("Location: index.php?error=Debe seleccionar un programa de interés");
+    // Insertar datos en la base de datos
+    $query = $config->conn->prepare("INSERT INTO archivos (email, programa) VALUES (?, ?)");
+    $query->bind_param("ss", $email, $programa);
+    
+    if (!$query->execute()) {
+        error_log("Error en INSERT: " . $query->error);
+        header("Location: index.php?error=Error al guardar datos.");
         exit();
     }
 
-    $email = $_POST["email"];
-    $programa = $_POST["programa"];
+    // Obtener el ID del usuario insertado
+    $id_archivo = $config->conn->insert_id;
 
-    // Validar que el programa seleccionado esté en la lista permitida
-    if (!in_array($programa, $programas)) {
-        header("Location: index.php?error=Programa seleccionado no válido");
-        exit();
-    }
+    // Manejo de archivos adjuntos
+    $archivos = [
+        "identificacion" => $_FILES["identificacion"],
+        "acta_bachiller" => $_FILES["acta_bachiller"],
+        "sisben" => $_FILES["sisben"],
+        "abono" => $_FILES["abono"]
+    ];
 
-    $archivos = ["identificacion", "acta_bachiller", "sisben", "abono"];
-    $datosArchivos = [];
-    $extensionesPermitidas = ["pdf", "png", "jpg", "jpeg"];
+    foreach ($archivos as $campo => $archivo) {
+        if (!empty($archivo["tmp_name"])) {
+            $archivoTmp = $archivo["tmp_name"];
+            $archivoMime = mime_content_type($archivoTmp);
+            $archivoBinario = file_get_contents($archivoTmp);
 
-    foreach ($archivos as $archivo) {
-        if (!isset($_FILES[$archivo]) || $_FILES[$archivo]["error"] !== UPLOAD_ERR_OK) {
-            if ($archivo == "abono") {
-                $datosArchivos[$archivo] = null;
-                continue;
+            // Validar formatos permitidos
+            $formatos_permitidos = ["application/pdf", "image/png", "image/jpeg"];
+            if (!in_array($archivoMime, $formatos_permitidos)) {
+                header("Location: index.php?error=Formato no permitido.");
+                exit();
             }
-            header("Location: index.php?error=Debe subir todos los archivos requeridos");
-            exit();
-        }
 
-        $extension = strtolower(pathinfo($_FILES[$archivo]["name"], PATHINFO_EXTENSION));
-        if (!in_array($extension, $extensionesPermitidas)) {
-            header("Location: index.php?error=Formato no permitido en $archivo");
-            exit();
-        }
+            // Actualizar el archivo en la base de datos
+            $query = $config->conn->prepare("UPDATE archivos SET $campo = ? WHERE id = ?");
+            $query->bind_param("bi", $archivoBinario, $id_archivo);
+            $query->send_long_data(0, $archivoBinario);
 
-        $datosArchivos[$archivo] = file_get_contents($_FILES[$archivo]["tmp_name"]);
+            if (!$query->execute()) {
+                error_log("Error al subir $campo: " . $query->error);
+                header("Location: index.php?error=Error al subir $campo.");
+                exit();
+            }
+        }
     }
 
-    // Insertar en la base de datos
-    $stmt = $conn->prepare("INSERT INTO archivos (email, programa, identificacion, acta_bachiller, sisben, abono) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssss", $email, $programa, $datosArchivos["identificacion"], $datosArchivos["acta_bachiller"], $datosArchivos["sisben"], $datosArchivos["abono"]);
-
-    if ($stmt->execute()) {
-        header("Location: index.php?success=1");
-    } else {
-        header("Location: index.php?error=Hubo un problema al subir los archivos");
-    }
-
-    $stmt->close();
-    $conn->close();
+    // Redirigir con SweetAlert2
+    header("Location: index.php?success=1");
     exit();
 }
 ?>
